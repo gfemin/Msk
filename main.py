@@ -150,7 +150,7 @@ def run_checker(message):
                 markup = types.InlineKeyboardMarkup(row_width=1)
                 markup.add(types.InlineKeyboardButton("⛔ sᴛᴏᴘ ⚠️", callback_data="stop"))
                 
-                is_hit = 'successful' in last or 'funds' in last or 'security code' in last
+                is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last
                 
                 if is_hit or (dd % 10 == 0):
                     try:
@@ -162,11 +162,11 @@ def run_checker(message):
                 print(f"{chat_id} : {cc} -> {last}")
                 
                 # 🔥 SAVE TO FILE LOGIC 🔥
-                if 'successful' in last or 'funds' in last:
+                if 'Donation Successful!' in last or 'funds' in last:
                     with open("lives.txt", "a") as f:
                         f.write(f"{cc} - {last} - {bank} ({country})\n")
 
-                if 'successful' in last:
+                if 'Donation Successful!' in last:
                     ch += 1
                     msg = f''' 
 𝐂𝐀𝐑𝐃: <code>{cc}</code>
