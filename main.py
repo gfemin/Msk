@@ -119,7 +119,7 @@ def run_checker(message):
                 # ===== CHECKER WITH TIMEOUT =====
                 try:
                     # 25 seconds timeout
-                    last = str(func_timeout(70, Tele, args=(cc,)))
+                    last = str(func_timeout(100, Tele, args=(cc,)))
                 except FunctionTimedOut:
                     last = 'Gateway Time Out ❌'
                 except Exception as e:
