@@ -1,108 +1,5 @@
-import requests
-import telebot, time, threading
-from telebot import types
-from gatet import Tele
-import os
-from func_timeout import func_timeout, FunctionTimedOut
-
 # ==========================================
-# 👇 BOT TOKEN
-# ==========================================
-token = '8299646020:AAHM7qDFRuBjcMRwFiLMwXMWxXxNs8mk0G4'
-bot = telebot.TeleBot(token, parse_mode="HTML")
-
-# ==========================================
-# 👇 ALLOWED USERS LIST
-# ==========================================
-ALLOWED_IDS = [
-    '1915369904',    # Owner
-    '',     # User 2
-    '',     # User 3
-    ''      # User 4
-]
-
-# ==========================================
-# 🎨 UI HELPER FUNCTION (VIRTUAL CARD)
-# ==========================================
-def get_virtual_card_ui(total, current, live, die, ccn, low, cvv, last_cc):
-    # Percentage Calculation
-    percent = int((current / total) * 100) if total > 0 else 0
-    filled = int(10 * current // total) if total > 0 else 0
-    bar = '▓' * filled + '░' * (10 - filled)
-    
-    # Card Masking (4400 66XX XXXX 7890)
-    if len(last_cc) > 12:
-        masked = last_cc[:4] + " " + last_cc[4:6] + "XX XXXX " + last_cc[-4:]
-    else:
-        masked = last_cc
-
-    # Card Brand Detection (Simple Logic for UI)
-    card_logo = "𝑽𝑰𝑺𝑨" if last_cc.startswith("4") else "𝗠.𝑪."
-    
-    # The UI Design
-    text = (
-        f"<code>╭──────────────────────╮</code>\n"
-        f"<code>│  {card_logo}  Pʟᴀᴛɪɴᴜᴍ      │</code>\n"
-        f"<code>│  {masked} │</code>\n"
-        f"<code>│  Exp: 12/2X   Cvv: ••• │</code>\n"
-        f"<code>╰──────────────────────╯</code>\n"
-        f"👤 <b>User:</b> Virus\n"
-        f"🔄 <b>Status:</b> <i>Checking...</i>\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"✅ <b>Live:</b> {live}     ❌ <b>Die:</b> {die}\n"
-        f"🔐 <b>CCN:</b> {ccn}       ⚠️ <b>Low:</b> {low}\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>[{bar}] {percent}%</b>"
-    )
-    
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("💳 STOP CHECKING", callback_data="stop"))
-    
-    return text, markup
-
-# ==========================================
-# 🤖 BOT COMMANDS
-# ==========================================
-
-@bot.message_handler(commands=["start"])
-def start(message):
-    if str(message.chat.id) not in ALLOWED_IDS:
-        bot.reply_to(message, "You cannot use the bot to contact developers to purchase a bot subscription @Rusisvirus")
-        return
-    bot.reply_to(message, "𝐒𝐞𝐧𝐝 𝐭𝐡𝐞 𝐟𝐢𝐥𝐞 𝐧𝐨𝐰❤️")
-
-@bot.message_handler(commands=["getlives"])
-def get_lives(message):
-    if str(message.chat.id) not in ALLOWED_IDS: return
-    try:
-        if os.path.exists("lives.txt"):
-            with open("lives.txt", "rb") as f:
-                bot.send_document(message.chat.id, f, caption="✅ <b>Here are your Charged/Live Cards</b>", parse_mode="HTML")
-        else:
-            bot.reply_to(message, "No Live cards saved yet! ❌")
-    except Exception as e:
-        bot.reply_to(message, f"Error sending file: {e}")
-
-@bot.message_handler(commands=["clearlives"])
-def clear_lives(message):
-    if str(message.chat.id) not in ALLOWED_IDS: return
-    if os.path.exists("lives.txt"):
-        os.remove("lives.txt")
-        bot.reply_to(message, "🗑️ <b>lives.txt has been cleared!</b>", parse_mode="HTML")
-    else:
-        bot.reply_to(message, "File is already empty.")
-
-@bot.message_handler(content_types=["document"])
-def main(message):
-    if str(message.chat.id) not in ALLOWED_IDS:
-        bot.reply_to(message, "You cannot use the bot to contact developers to purchase a bot subscription @Rusisvirus")
-        return
-
-    t = threading.Thread(target=run_checker, args=(message,))
-    t.start()
-
-# ==========================================
-# 🚀 CHECKER LOGIC
+# 🚀 CHECKER LOGIC (FIXED UI ISSUE)
 # ==========================================
 def run_checker(message):
     dd = 0
@@ -129,10 +26,15 @@ def run_checker(message):
             lino = file.readlines()
             total = len(lino)
             
+            # 🔥 FIX 1: UI ကို Loop မဝင်ခင် (သို့) ပထမဆုံးအကြိမ်မှာ ချက်ချင်းပြမယ်
+            # အရင်ဆုံး Empty Dashboard လေး ပြလိုက်တာပါ
+            view_text, markup = get_virtual_card_ui(total, 0, 0, 0, 0, 0, 0, "Wait...")
+            bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
+
             for index, cc in enumerate(lino, 1):
                 cc = cc.strip()
                 
-                # ===== STOP CHECK (1) =====
+                # ===== STOP CHECK =====
                 if os.path.exists(stop_file):
                     bot.edit_message_text(chat_id=chat_id, message_id=ko, text='🛑 <b>STOPPED (User Request)</b>')
                     os.remove(stop_file)
@@ -150,13 +52,6 @@ def run_checker(message):
                 country = data.get('country_name', 'Unknown')
                 country_flag = data.get('country_flag', '')
                 bank = data.get('bank', 'Unknown')
-                
-                # ===== STOP CHECK (2) =====
-                if os.path.exists(stop_file):
-                    bot.edit_message_text(chat_id=chat_id, message_id=ko, text='🛑 <b>STOPPED (User Request)</b>')
-                    os.remove(stop_file)
-                    if os.path.exists(file_name): os.remove(file_name)
-                    return
 
                 start_time = time.time()
                 
@@ -173,14 +68,14 @@ def run_checker(message):
                 execution_time = end_time - start_time
                 
                 # ==========================================
-                # 🔥 NEW DASHBOARD UI 🔥
+                # 🔥 DASHBOARD UI UPDATE Logic Fixed 🔥
                 # ==========================================
                 
-                is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last
-                current_checked = dd + ch + ccn + cvv + lowfund
+                is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last
                 
-                # 10 ကဒ်တိုင်း (သို့) Hit မိရင် UI Update မယ်
-                if is_hit or (index % 10 == 0) or (index == total):
+                # 🔥 FIX 2: ပထမဆုံးကဒ် (index==1)၊ Hit မိရင်၊ သို့မဟုတ် ၅ ကဒ်ပြည့်တိုင်း Update မယ်
+                # အရင်က 10 ကဒ်ထားလို့ ကြာနေတာ
+                if is_hit or (index == 1) or (index % 5 == 0) or (index == total):
                     view_text, markup = get_virtual_card_ui(total, index, ch, dd, ccn, lowfund, cvv, cc)
                     try:
                         bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
@@ -241,7 +136,7 @@ def run_checker(message):
 <b>Bot by:</b> @Rusisvirus'''
                     bot.reply_to(message, msg)
                     
-                    # Update Dashboard immediately for CCN
+                    # Force Update for CCN
                     view_text, markup = get_virtual_card_ui(total, index, ch, dd, ccn, lowfund, cvv, cc)
                     try:
                         bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
@@ -287,22 +182,3 @@ def run_checker(message):
 
     except Exception as e:
         print(f"Error for {chat_id}: {e}")
-
-# ==========================================
-# 🛑 STOP CALLBACK
-# ==========================================
-@bot.callback_query_handler(func=lambda call: call.data == 'stop')
-def menu_callback(call):
-    stop_file = f"stop_{call.message.chat.id}.stop"
-    with open(stop_file, "w") as file:
-        pass
-    bot.answer_callback_query(call.id, "Stopping...")
-
-# ===== POLLING =====
-print("🤖 Virtual Card Bot Started...")
-while True:
-    try:
-        bot.polling(non_stop=True, timeout=20, long_polling_timeout=20)
-    except Exception as e:
-        print("Polling error:", e)
-        time.sleep(5)
