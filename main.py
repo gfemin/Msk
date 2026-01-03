@@ -22,42 +22,26 @@ ALLOWED_IDS = [
 ]
 
 # ==========================================
-# 🎨 UI HELPER FUNCTION (VIRTUAL CARD)
+# 🎨 UI HELPER FUNCTION (SIMPLE LIST STYLE)
 # ==========================================
-def get_virtual_card_ui(total, current, live, die, ccn, low, cvv, last_cc):
-    # Percentage Calculation
-    percent = int((current / total) * 100) if total > 0 else 0
-    filled = int(10 * current // total) if total > 0 else 0
-    bar = '▓' * filled + '░' * (10 - filled)
-    
-    # Card Masking (4400 66XX XXXX 7890) logic
-    # "Wait..." သို့မဟုတ် အခြားစာသားဖြစ်နေရင် error မတက်အောင် စစ်မယ်
-    if len(last_cc) > 12:
-        masked = last_cc[:4] + " " + last_cc[4:6] + "XX XXXX " + last_cc[-4:]
-        card_logo = "𝑽𝑰𝑺𝑨" if last_cc.startswith("4") else "𝗠.𝑪."
+def get_dashboard_ui(total, current, live, die, ccn, low, cvv, last_cc):
+    # CC Masking (Privacy)
+    if len(last_cc) > 10:
+        masked_cc = last_cc
     else:
-        masked = "XXXX XXXX XXXX XXXX"
-        card_logo = "VIRTUAL"
+        masked_cc = "Wait..."
 
-    # The UI Design
     text = (
-        f"<code>╭──────────────────────╮</code>\n"
-        f"<code>│  {card_logo}  Pʟᴀᴛɪɴᴜᴍ      │</code>\n"
-        f"<code>│  {masked} │</code>\n"
-        f"<code>│  Exp: 12/2X   Cvv: ••• │</code>\n"
-        f"<code>╰──────────────────────╯</code>\n"
-        f"👤 <b>User:</b> Virus\n"
-        f"🔄 <b>Status:</b> <i>Checking...</i>\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"✅ <b>Live:</b> {live}     ❌ <b>Die:</b> {die}\n"
-        f"🔐 <b>CCN:</b> {ccn}       ⚠️ <b>Low:</b> {low}\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>[{bar}] {percent}%</b>"
+        f"⚡ <b>Checking Payment Gateway...</b>\n\n"
+        f"💳 <b>Card:</b> <code>{masked_cc}</code>\n"
+        f"📂 <b>Total:</b> {current} / {total}\n\n"
+        f"● <b>Live Hits:</b> {live}\n"
+        f"● <b>Dead Cards:</b> {die}\n"
+        f"● <b>CCN Found:</b> {ccn}\n"
+        f"● <b>Low Funds:</b> {low}"
     )
-    
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("💳 STOP CHECKING", callback_data="stop"))
-    
+    markup.add(types.InlineKeyboardButton("⛔ STOP", callback_data="stop"))
     return text, markup
 
 # ==========================================
@@ -102,7 +86,7 @@ def main(message):
     t.start()
 
 # ==========================================
-# 🚀 CHECKER LOGIC (FULL FIX)
+# 🚀 CHECKER LOGIC
 # ==========================================
 def run_checker(message):
     dd = 0
@@ -129,8 +113,8 @@ def run_checker(message):
             lino = file.readlines()
             total = len(lino)
             
-            # 🔥 FIX 1: Show UI immediately before loop
-            view_text, markup = get_virtual_card_ui(total, 0, 0, 0, 0, 0, 0, "Wait...")
+            # 🔥 FIX: Show UI Immediately (Before Loop Starts)
+            view_text, markup = get_dashboard_ui(total, 0, 0, 0, 0, 0, 0, "Wait...")
             bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
 
             for index, cc in enumerate(lino, 1):
@@ -177,14 +161,14 @@ def run_checker(message):
                 execution_time = end_time - start_time
                 
                 # ==========================================
-                # 🔥 DASHBOARD UI UPDATE Logic Fixed 🔥
+                # 🔥 DASHBOARD UPDATE LOGIC
                 # ==========================================
                 
                 is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last
                 
-                # 🔥 FIX 2: Hit မိရင် (သို့) ၁ ကဒ်မြောက် (သို့) ၅ ကဒ်ပြည့်တိုင်း Update
+                # Update UI: If Hit OR 1st Card OR Every 5 Cards OR Last Card
                 if is_hit or (index == 1) or (index % 5 == 0) or (index == total):
-                    view_text, markup = get_virtual_card_ui(total, index, ch, dd, ccn, lowfund, cvv, cc)
+                    view_text, markup = get_dashboard_ui(total, index, ch, dd, ccn, lowfund, cvv, cc)
                     try:
                         bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
                     except Exception as e:
@@ -244,8 +228,8 @@ def run_checker(message):
 <b>Bot by:</b> @Rusisvirus'''
                     bot.reply_to(message, msg)
                     
-                    # Update immediately for CCN
-                    view_text, markup = get_virtual_card_ui(total, index, ch, dd, ccn, lowfund, cvv, cc)
+                    # Update UI immediately for CCN
+                    view_text, markup = get_dashboard_ui(total, index, ch, dd, ccn, lowfund, cvv, cc)
                     try:
                         bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
                     except:
@@ -302,7 +286,7 @@ def menu_callback(call):
     bot.answer_callback_query(call.id, "Stopping...")
 
 # ===== POLLING =====
-print("🤖 Virtual Card Bot Started...")
+print("🤖 Simple UI Bot Started...")
 while True:
     try:
         bot.polling(non_stop=True, timeout=20, long_polling_timeout=20)
