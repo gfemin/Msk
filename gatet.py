@@ -34,7 +34,7 @@ def Tele(ccx):
         random_name = ''.join(random.choice(letters) for i in range(10))
         random_email = f"{random_name}@gmail.com"
 
-        # 🔥 RETRY SYSTEM (Connection ငြိမ်အောင်)
+        # 🔥 RETRY SYSTEM
         session = requests.Session()
         retry = Retry(
             total=3, 
@@ -64,18 +64,29 @@ def Tele(ccx):
             'https://api.stripe.com/v1/payment_methods',
             headers=headers,
             data=data,
-            timeout=40 
+            timeout=60 
         )
 
-        # 🔥 DEBUGGING ERROR HERE 🔥
         try:
             json_response = response.json()
         except:
             return "Proxy Error (Invalid JSON) ❌"
 
+        # 🔥 ERROR HANDLING FOR STRIPE CODES 🔥
+        if 'error' in json_response:
+            code = json_response['error'].get('code')
+            if code == 'incorrect_number':
+                return "Invalid Card Number ❌"
+            elif code == 'invalid_number':
+                return "Invalid Card Number ❌"
+            elif code == 'invalid_expiry_month':
+                return "Invalid Expiry Date ❌"
+            elif code == 'invalid_cvc':
+                return "Invalid CVC ❌"
+            else:
+                return f"Stripe Error: {code} ❌"
+
         if 'id' not in json_response:
-            # Console မှာ Error အစစ်ကို ထုတ်ပြမယ်
-            print(f"❌ Stripe Blocked {n}: {json_response}") 
             return "Proxy Error (PM Failed) ❌"
             
         pm = json_response['id']
