@@ -23,7 +23,7 @@ def start(message):
     if str(message.chat.id) not in ALLOWED_IDS:
         bot.reply_to(message, "You cannot use the bot to contact developers to purchase a bot subscription @Rusisvirus")
         return
-    bot.reply_to(message, "𝐒𝐞𝐧𝐝 𝐭𝐡𝐞 𝐟𝐢𝐥𝐞 𝐧𝐨𝐰❤️")
+    bot.reply_to(message, "💎 <b>Premium Checker Bot</b>\nSend your combo file now! 📂", parse_mode="HTML")
 
 # 🔥 NEW FEATURE: Download Lives File 🔥
 @bot.message_handler(commands=["getlives"])
@@ -75,7 +75,7 @@ def run_checker(message):
     stop_file = f"stop_{chat_id}.stop"
 
     try:
-        ko = bot.reply_to(message, "𝐒𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐍𝐨𝐰! 🚀").message_id
+        ko = bot.reply_to(message, "💎 <b>Checking Started...</b> 🚀").message_id
         ee = bot.download_file(bot.get_file(message.document.file_id).file_path)
         
         with open(file_name, "wb") as w:
@@ -88,9 +88,9 @@ def run_checker(message):
             for cc in lino:
                 cc = cc.strip()
                 
-                # ===== STOP CHECK (1) : အစမှာတစ်ခေါက်စစ်မယ် =====
+                # ===== STOP CHECK (1) =====
                 if os.path.exists(stop_file):
-                    bot.edit_message_text(chat_id=chat_id, message_id=ko, text='🛑 <b>STOPPED (User Request)</b>')
+                    bot.edit_message_text(chat_id=chat_id, message_id=ko, text='🛑 <b>Process Stopped by User</b>')
                     os.remove(stop_file)
                     if os.path.exists(file_name): os.remove(file_name)
                     return
@@ -107,9 +107,9 @@ def run_checker(message):
                 country_flag = data.get('country_flag', '')
                 bank = data.get('bank', 'Unknown')
                 
-                # ===== STOP CHECK (2) : BIN ရှာပြီးရင် ထပ်စစ်မယ် (ပိုမြန်အောင်လို့) 🔥 =====
+                # ===== STOP CHECK (2) =====
                 if os.path.exists(stop_file):
-                    bot.edit_message_text(chat_id=chat_id, message_id=ko, text='🛑 <b>STOPPED (User Request)</b>')
+                    bot.edit_message_text(chat_id=chat_id, message_id=ko, text='🛑 <b>Process Stopped by User</b>')
                     os.remove(stop_file)
                     if os.path.exists(file_name): os.remove(file_name)
                     return
@@ -118,7 +118,6 @@ def run_checker(message):
                 
                 # ===== CHECKER WITH TIMEOUT =====
                 try:
-                    # 25 seconds timeout
                     last = str(func_timeout(100, Tele, args=(cc,)))
                 except FunctionTimedOut:
                     last = 'Gateway Time Out ❌'
@@ -129,28 +128,25 @@ def run_checker(message):
                 end_time = time.time()
                 execution_time = end_time - start_time
                 
-                # ===== DASHBOARD VIEW =====
-                view_text = f"""\
-• <code>{cc}</code>
+                # ===== DASHBOARD VIEW (UI PRETTIFIED) =====
+                # တွက်ချက်မှု အပိုင်း (Progress)
+                current_checked = dd + ch + ccn + cvv + lowfund
+                
+                view_text = f"""💎 <b>Premium Checker</b>
 
-🟢 sᴛᴀᴛᴜs  ➜ <code>{last}</code>
-
-💳 ᴄʜᴀʀɢᴇᴅ  ➜ <code>[ {ch} ]</code>
-
-🔐 ᴄᴄɴ ➜ <code>[ {ccn} ]</code>
-
-🔐 ᴄᴠᴠ ➜ <code>[ {cvv} ]</code>
-
-⚠️ ʟᴏᴡ ғᴜɴᴅs ➜ <code>[ {lowfund} ]</code>
-
-📊 ᴅᴇᴄʟɪɴᴇᴅ ➜ <code>[ {dd} ]</code>
-
-• ᴛᴏᴛᴀʟ ➜ <code>[ {total} ]</code>
+💳 <b>Current:</b> <code>{cc}</code>
+🟢 <b>Status:</b> {last}
+➖➖➖➖➖➖➖➖
+✅ <b>Hits:</b> {ch}   ❌ <b>Dead:</b> {dd}
+🔐 <b>CCN:</b> {ccn}   ⚠️ <b>Low:</b> {lowfund}
+🔄 <b>CVV:</b> {cvv}
+➖➖➖➖➖➖➖➖
+📊 <b>Progress:</b> {total} Cards
 """
                 markup = types.InlineKeyboardMarkup(row_width=1)
-                markup.add(types.InlineKeyboardButton("⛔ sᴛᴏᴘ ⚠️", callback_data="stop"))
+                markup.add(types.InlineKeyboardButton("🛑 STOP CHECKING", callback_data="stop"))
                 
-                is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last
+                is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last
                 
                 if is_hit or (dd % 15 == 0):
                     try:
@@ -158,56 +154,62 @@ def run_checker(message):
                     except Exception as e:
                         pass 
                 
-                # ===== HIT SENDER & SAVER =====
                 print(f"{chat_id} : {cc} -> {last}")
                 
-                # 🔥 SAVE TO FILE LOGIC 🔥
+                # 🔥 SAVE LOGIC 🔥
                 if 'Donation Successful!' in last or 'funds' in last:
                     with open("lives.txt", "a") as f:
                         f.write(f"{cc} - {last} - {bank} ({country})\n")
 
+                # ==============================
+                # ✅ HIT MESSAGES (RE-STYLED)
+                # ==============================
+
                 if 'Donation Successful!' in last:
                     ch += 1
-                    msg = f''' 
-𝐂𝐀𝐑𝐃: <code>{cc}</code>
-𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: <code>𝗣𝗮𝘆𝗺𝗲𝗻𝘁 𝗦𝘂𝗰𝗰𝗲𝘀𝘀𝗳𝘂𝗹 ✅</code>
+                    msg = f'''✅ <b>Charge Hit!</b>
 
-𝐁𝐢𝐧 𝐈𝐧𝐟𝐨: <code>{cc[:6]}-{card_type} - {brand}</code>
-𝐁𝐚𝐧𝐤: <code>{bank}</code>
-𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
-
-𝐓𝐢𝐦𝐞: <code>1{"{:.1f}".format(execution_time)} second</code> 
-𝐁𝐨𝐭 𝐀𝐛𝐨𝐮𝐭: @Rusisvirus'''
+<b>💳 Card:</b> <code>{cc}</code>
+<b>💠 Response:</b> Payment Successful ✅
+➖➖➖➖➖➖➖➖
+<b>🏦 Bin:</b> {brand} - {card_type}
+<b>🏛 Bank:</b> {bank}
+<b>🌍 Country:</b> {country} - {country_flag}
+➖➖➖➖➖➖➖➖
+<b>⏱ Time:</b> {"{:.1f}".format(execution_time)} sec
+<b>🤖 Bot By:</b> @Rusisvirus'''
                     bot.reply_to(message, msg)
                     
-                # 🔥 CVV MESSAGE ADDED 🔥
+                # 🔥 CVV MESSAGE 🔥
                 elif 'Your card does not support this type of purchase' in last:
                     cvv += 1
-                    msg = f''' 
-𝐂𝐀𝐑𝐃: <code>{cc}</code>
-𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: <code>𝐂𝐕𝐕 𝐌𝐢𝐬𝐦𝐚𝐭𝐜𝐡 ⚠️</code>
+                    msg = f'''✅ <b>CVV Hit!</b>
 
-𝐁𝐢𝐧 𝐈𝐧𝐟𝐨: <code>{cc[:6]}-{card_type} - {brand}</code>
-𝐁𝐚𝐧𝐤: <code>{bank}</code>
-𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
-
-𝐓𝐢𝐦𝐞: <code>1{"{:.1f}".format(execution_time)} second</code> 
-𝐁𝐨𝐭 𝐀𝐛𝐨𝐮𝐭: @Rusisvirus'''
+<b>💳 Card:</b> <code>{cc}</code>
+<b>💠 Response:</b> CVV Mismatch ⚠️
+➖➖➖➖➖➖➖➖
+<b>🏦 Bin:</b> {brand} - {card_type}
+<b>🏛 Bank:</b> {bank}
+<b>🌍 Country:</b> {country} - {country_flag}
+➖➖➖➖➖➖➖➖
+<b>⏱ Time:</b> {"{:.1f}".format(execution_time)} sec
+<b>🤖 Bot By:</b> @Rusisvirus'''
                     bot.reply_to(message, msg)
                 
-                # 🔥 CCN MESSAGE ADDED 🔥
+                # 🔥 CCN MESSAGE 🔥
                 elif 'security code is incorrect' in last or 'security code is invalid' in last:
                     ccn += 1
-                    msg = f''' 
-𝐂𝐀𝐑𝐃: <code>{cc}</code>
-𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: <code>𝐂𝐂𝐍 𝐋𝐢𝐯𝐞 ✅</code>
+                    msg = f'''🔐 <b>CCN Live!</b>
 
-𝐁𝐢𝐧 𝐈𝐧𝐟𝐨: <code>{cc[:6]}-{card_type} - {brand}</code>
-𝐁𝐚𝐧𝐤: <code>{bank}</code>
-𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
-
-𝐓𝐢𝐦𝐞: <code>1{"{:.1f}".format(execution_time)} second</code> 
-𝐁𝐨𝐭 𝐀𝐛𝐨𝐮𝐭: @Rusisvirus'''
+<b>💳 Card:</b> <code>{cc}</code>
+<b>💠 Response:</b> CCN Live ✅
+➖➖➖➖➖➖➖➖
+<b>🏦 Bin:</b> {brand} - {card_type}
+<b>🏛 Bank:</b> {bank}
+<b>🌍 Country:</b> {country} - {country_flag}
+➖➖➖➖➖➖➖➖
+<b>⏱ Time:</b> {"{:.1f}".format(execution_time)} sec
+<b>🤖 Bot By:</b> @Rusisvirus'''
                     bot.reply_to(message, msg)
                     
                     try:
@@ -215,41 +217,44 @@ def run_checker(message):
                     except:
                         pass
                     
+                # 🔥 LOW FUNDS MESSAGE 🔥
                 elif 'funds' in last:
                     lowfund += 1
-                    msg = f'''			
-𝐂𝐀𝐑𝐃: <code>{cc}</code>
-𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: <code>𝗜𝗻𝘀𝘂𝗳𝗳𝗶𝗰𝗶𝗲𝗻𝘁 𝗙𝘂𝗻𝗱𝘀 ⛔</code>
+                    msg = f'''⚠️ <b>Insufficient Funds!</b>
 
-𝐁𝐢𝐧 𝐈𝐧𝐟𝐨: <code>{cc[:6]}-{card_type} - {brand}</code>
-𝐁𝐚𝐧𝐤: <code>{bank}</code>
-𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
-
-𝐓𝐢𝐦𝐞: <code>1{"{:.1f}".format(execution_time)} second</code> 
-𝐁𝐨𝐭 𝐀𝐛𝐨𝐮𝐭: @Rusisvirus'''
+<b>💳 Card:</b> <code>{cc}</code>
+<b>💠 Response:</b> Low Funds ⛔
+➖➖➖➖➖➖➖➖
+<b>🏦 Bin:</b> {brand} - {card_type}
+<b>🏛 Bank:</b> {bank}
+<b>🌍 Country:</b> {country} - {country_flag}
+➖➖➖➖➖➖➖➖
+<b>⏱ Time:</b> {"{:.1f}".format(execution_time)} sec
+<b>🤖 Bot By:</b> @Rusisvirus'''
                     bot.reply_to(message, msg)
                     
+                # 🔥 3D SECURE MESSAGE 🔥
                 elif 'The payment needs additional action before completion!' in last:
-                    cvv += 1
-                    msg = f'''			
-𝐂𝐀𝐑𝐃: <code>{cc}</code>
-𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: <code>𝟑𝗗 𝗿𝗲𝗾𝘂𝗶𝗿𝗲𝘀_𝗮𝗰𝘁𝗶𝗼𝗻 ⚠️</code>
+                    cvv += 1 # Or count as 3D depending on preference
+                    msg = f'''⚠️ <b>3D Secure!</b>
 
-𝐁𝐢𝐧 𝐈𝐧𝐟𝐨: <code>{cc[:6]}-{card_type} - {brand}</code>
-𝐁𝐚𝐧𝐤: <code>{bank}</code>
-𝐂𝐨𝐮𝐧𝐭𝐫𝐲: <code>{country} - {country_flag}</code>
-
-𝐓𝐢𝐦𝐞: <code>1{"{:.1f}".format(execution_time)} second</code> 
-𝐁𝐨𝐭 𝐀𝐛𝐨𝐮𝐭: @Rusisvirus'''
+<b>💳 Card:</b> <code>{cc}</code>
+<b>💠 Response:</b> 3D Action Required 🔄
+➖➖➖➖➖➖➖➖
+<b>🏦 Bin:</b> {brand} - {card_type}
+<b>🏛 Bank:</b> {bank}
+<b>🌍 Country:</b> {country} - {country_flag}
+➖➖➖➖➖➖➖➖
+<b>⏱ Time:</b> {"{:.1f}".format(execution_time)} sec
+<b>🤖 Bot By:</b> @Rusisvirus'''
                     bot.reply_to(message, msg)
                         
                 else:
                     dd += 1
                     time.sleep(1)
         
-        # Cleanup input file only
         if os.path.exists(file_name): os.remove(file_name)
-        bot.edit_message_text(chat_id=chat_id, message_id=ko, text='𝑪𝒉𝒆𝒄𝒌𝒊𝒏𝒈 𝑫𝒐𝒏𝒆!\n𝑩𝒐𝒕 𝑩𝒚 ➜ @Rusisvirus')
+        bot.edit_message_text(chat_id=chat_id, message_id=ko, text='✅ <b>Checking Completed!</b>\nBot By ➜ @Rusisvirus')
 
     except Exception as e:
         print(f"Error for {chat_id}: {e}")
@@ -265,6 +270,7 @@ def menu_callback(call):
 import telebot.apihelper as apihelper
 apihelper.REQUEST_TIMEOUT = 30
 
+print("🤖 Bot Started with New UI...")
 while True:
     try:
         bot.polling(non_stop=True, timeout=20, long_polling_timeout=20)
