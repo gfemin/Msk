@@ -12,7 +12,7 @@ PROXY_HOST = 'geo.g-w.info'
 PROXY_PORT = '10080'
 
 # 🔥 မင်းရဲ့ Proxy User/Pass
-PROXY_USER = 'user-7xkEOw8bXcNNWHHW-type-residential-session-hrzyaot4-country-US-city-Salt_Lake_City-rotation-15'
+PROXY_USER = 'user-7xkEOw8bXcNNWHHW-type-residential-session-c7pis59q-country-US-city-Green_Bay-rotation-15'
 PROXY_PASS = 'CMvQFPYozpgFTlXC'
 
 # Proxy String
