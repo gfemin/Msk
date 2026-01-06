@@ -180,7 +180,7 @@ def run_checker(message):
                 end_time = time.time()
                 execution_time = end_time - start_time
                 
-                is_hit = 'Payment Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last or 'completion' in last
+                is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last or 'completion' in last
                 
                 # Update UI
                 if is_hit or (index == 1) or (index % 8 == 0) or (index == total):
@@ -192,7 +192,7 @@ def run_checker(message):
                 
                 print(f"{chat_id} : {cc} -> {last}")
                 
-                if 'Payment Successful!' in last or 'funds' in last:
+                if 'Donation Successful!' in last or 'funds' in last:
                     with open("lives.txt", "a") as f:
                         f.write(f"{cc} - {last} - {bank} ({country})\n")
 
@@ -201,7 +201,7 @@ def run_checker(message):
                 # ==========================================
                 line = "━━━━━━━━━━━━━━━━━━"
                 
-                if 'Payment Successful!' in last:
+                if 'Donation Successful!' in last:
                     ch += 1
                     msg = f'''{line}
 • <code>{cc}</code>
