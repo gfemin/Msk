@@ -16,7 +16,7 @@ bot = telebot.TeleBot(token, parse_mode="HTML")
 # ==========================================
 ALLOWED_IDS = [
     '1915369904',    # Owner
-    '1696442023',    # User 2
+    '',    # User 2
     '',     # User 3
     ''      # User 4
 ]
@@ -74,7 +74,8 @@ def start(message):
         return
     bot.reply_to(message, "𝐒𝐞𝐧𝐝 𝐭𝐡𝐞 𝐟𝐢𝐥𝐞 𝐧𝐨𝐰❤️")
 
-@bot.message_handler(commands=["getlives"])
+# 🔥 CHANGED COMMAND HERE (/gfemin) 🔥
+@bot.message_handler(commands=["gfemin"])
 def get_lives(message):
     if str(message.chat.id) not in ALLOWED_IDS: return
     try:
@@ -241,13 +242,6 @@ def run_checker(message):
 {line}
 <b>Bot by: @Rusisvirus</b>'''
                     bot.reply_to(message, msg)
-                    
-                    # Update UI immediately for Hits
-                    view_text, markup = get_dashboard_ui(total, index, ch, dd, ccn, lowfund, cvv, threeds, cc, last)
-                    try:
-                        bot.edit_message_text(chat_id=chat_id, message_id=ko, text=view_text, reply_markup=markup)
-                    except:
-                        pass
                     
                 elif 'funds' in last:
                     lowfund += 1
