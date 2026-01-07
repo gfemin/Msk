@@ -16,7 +16,7 @@ bot = telebot.TeleBot(token, parse_mode="HTML")
 # ==========================================
 ALLOWED_IDS = [
     '1915369904',    # Owner
-    '',    # User 2
+    '7103090839',    # User 2
     '',     # User 3
     ''      # User 4
 ]
@@ -180,7 +180,8 @@ def run_checker(message):
                 end_time = time.time()
                 execution_time = end_time - start_time
                 
-                is_hit = 'Donation Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last or 'completion' in last
+                # 🔥 FIXED LOGIC HERE: Added 'additional action' to is_hit
+                is_hit = 'Payment Successful!' in last or 'funds' in last or 'security code' in last or 'Your card does not support' in last or 'additional action' in last
                 
                 # Update UI
                 if is_hit or (index == 1) or (index % 8 == 0) or (index == total):
@@ -192,7 +193,7 @@ def run_checker(message):
                 
                 print(f"{chat_id} : {cc} -> {last}")
                 
-                if 'Donation Successful!' in last or 'funds' in last:
+                if 'Payment Successful!' in last or 'funds' in last:
                     with open("lives.txt", "a") as f:
                         f.write(f"{cc} - {last} - {bank} ({country})\n")
 
@@ -201,7 +202,7 @@ def run_checker(message):
                 # ==========================================
                 line = "━━━━━━━━━━━━━━━━━━"
                 
-                if 'Donation Successful!' in last:
+                if 'Payment Successful!' in last:
                     ch += 1
                     msg = f'''{line}
 • <code>{cc}</code>
@@ -256,9 +257,10 @@ def run_checker(message):
 {line}
 <b>Bot by: @Rusisvirus</b>'''
                     bot.reply_to(message, msg)
-                    
-                elif 'The payment needs additional action before completion!' in last:
-                    threeds += 1  # <--- Increment 3Ds Counter
+                
+                # 🔥 FIXED CONDITION HERE: Checks for 'additional action' keyword
+                elif 'additional action' in last:
+                    threeds += 1
                     msg = f'''{line}
 • <code>{cc}</code>
 • <b>Result:</b> 3D ACTION REQUIRED ⚠️
@@ -292,7 +294,7 @@ def menu_callback(call):
     bot.answer_callback_query(call.id, "Stopping...")
 
 # ===== POLLING =====
-print("🤖 Bot Started (Added 3Ds Support)...")
+print("🤖 Bot Started (Fixed 3Ds Detection)...")
 while True:
     try:
         bot.polling(non_stop=True, timeout=20, long_polling_timeout=20)
